@@ -1,20 +1,33 @@
-export default async function handler(req, res) {
-  const { phone } = req.query;
+export const config = {
+  runtime: "edge"
+};
+
+export default async function handler(req) {
+  const phone = new URL(req.url).searchParams.get("phone");
 
   if (!phone) {
-    return res.status(400).json({ error: "Phone missing" });
+    return new Response(JSON.stringify({ error: "phone missing" }), {
+      headers: { "content-type": "application/json" }
+    });
   }
 
   try {
-    const response = await fetch(
-      `https://api.impossible-world.xyz/api/data?phone=${phone}`
+    const api = await fetch(
+      "https://api.impossible-world.xyz/api/data?phone=" + phone
     );
 
-    const data = await response.text();
+    const data = await api.text();
 
-    res.setHeader("Access-Control-Allow-Origin", "*");
-    res.status(200).send(data);
-  } catch (error) {
-    res.status(500).json({ error: "API failed" });
+    return new Response(data, {
+      headers: {
+        "content-type": "application/json",
+        "access-control-allow-origin": "*"
+      }
+    });
+
+  } catch (e) {
+    return new Response(JSON.stringify({ error: "proxy failed" }), {
+      headers: { "content-type": "application/json" }
+    });
   }
 }
